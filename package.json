@@ -56,5 +56,10 @@
     "eslint": "^9.21.0",
     "@vscode/test-cli": "^0.0.10",
     "@vscode/test-electron": "^2.4.1"
+  },
+  "dependencies": {
+    "speaker": "^0.5.4",
+    "wav": "^1.0.2",
+    "xml2js": "^0.6.0"
   }
 }
