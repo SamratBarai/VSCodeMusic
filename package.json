@@ -22,6 +22,11 @@
         "command": "extension.playMusic",
         "title": "Play Music",
         "category": "Music Player"
+      },
+      {
+        "command": "extension.pauseMusic",
+        "title": "Pause Music",
+        "category": "Music Player"
       }
     ],
     "viewsContainers": {

@@ -78,7 +78,7 @@ class MusicViewProvider {
         const result = await vscode.window.showOpenDialog({
             canSelectFiles: true,
             canSelectFolders: true,
-            canSelectMany: false,
+            canSelectMany: true,
             defaultUri: vscode.Uri.file(defaultMusicPath),
             filters: {
                 'XSPF Playlists': ['xspf'],
@@ -251,28 +251,47 @@ class MusicViewProvider {
 
 function activate(context) {
     const provider = new MusicViewProvider(context.extensionUri);
-    
-    // Create status bar item
-    const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
-    statusBarItem.text = "$(play) Music Player";
-    statusBarItem.tooltip = "Click to show music player";
-    statusBarItem.command = 'extension.showMusicPlayer';
-    statusBarItem.show();
-    
-    context.subscriptions.push(
-        vscode.window.registerWebviewViewProvider('musicView', provider),
-        statusBarItem
-    );
 
     let playMusic = vscode.commands.registerCommand('extension.playMusic', () => {
         provider.playMusic();
     });
 
+    let pauseMusic = vscode.commands.registerCommand('extension.pauseMusic', () => {
+        provider.pauseMusic();
+    });
+
     let showMusicPlayer = vscode.commands.registerCommand('extension.showMusicPlayer', () => {
         vscode.commands.executeCommand('musicView.focus');
     });
+    
+    context.subscriptions.push(playMusic, pauseMusic, showMusicPlayer);
 
-    context.subscriptions.push(playMusic, showMusicPlayer);
+    // Create status bar item
+    const playMusicItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
+    playMusicItem.text = "Play";
+    playMusicItem.tooltip = "Click to play music";
+    playMusicItem.command = 'extension.playMusic';
+    playMusicItem.show();
+
+    const pauseMusicItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
+    pauseMusicItem.text = "Pause";
+    pauseMusicItem.tooltip = "Click to pause music";
+    pauseMusicItem.command = 'extension.pauseMusic';
+    pauseMusicItem.show();
+
+    const showMusicItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
+    showMusicItem.text = "Open music";
+    showMusicItem.tooltip = "Click to Show sidebar";
+    showMusicItem.command = 'extension.showMusicPlayer';
+    showMusicItem.show();
+    
+    context.subscriptions.push(
+        vscode.window.registerWebviewViewProvider('musicView', provider),
+        playMusicItem, 
+        pauseMusicItem, 
+        showMusicItem
+    );
+    
 }
 
 function deactivate() {}
