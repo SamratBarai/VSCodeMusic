@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <style>
+            @import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Lobster&family=Roboto:ital,wght@0,100..900;1,100..900&family=Rubik:ital,wght@0,300..900;1,300..900&display=swap');
+            body {
+                padding: 10px;
+                font-family: "Inter", sans-serif;
+                color: var(--vscode-foreground);
+            }
+            .button-container {
+                display: flex;
+                flex-direction: column;
+                gap: 16px;
+            }
+            .control-container {
+                display: flex;
+                flex-direction: row;
+                gap: 8px;
+            }
+            button {
+                width: 100%;
+                padding: 8px;
+                background: var(--vscode-button-background);
+                color: var(--vscode-button-foreground);
+                border: none;
+                border-radius: 2px;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 5px;
+            }
+            button:hover {
+                background: var(--vscode-button-hoverBackground);
+            }
+
+            #audioPlayer {
+                height: 44px;
+                border-radius: 36x;
+            }
+            .playlist-info {
+                margin: 10px 0;
+                padding: 5px;
+                background: var(--vscode-editor-background);
+                border: 1px solid var(--vscode-panel-border);
+                border-radius: 2px;
+            }
+            .icon {
+                width: 16px;
+                height: 16px;
+                fill: currentColor;
+            }
+            #songList {
+                margin-top: 10px;
+                max-height: 200px;
+                overflow-y: auto;
+            }
+            .song-item {
+                padding: 5px;
+                cursor: pointer;
+            }
+            .song-item:hover {
+                background: var(--vscode-list-hoverBackground);
+            }
+            .song-item.active {
+                background: var(--vscode-list-activeSelectionBackground);
+                color: var(--vscode-list-activeSelectionForeground);
+            }
+            .volume-container {
+                display: flex;
+                align-items: center;
+                gap: 24px;
+                margin-top: 10px;
+                padding: 5px;
+                background: var(--vscode-editor-background);
+                border: 1px solid var(--vscode-panel-border);
+                border-radius: 2px;
+            }
+
+            .volume-slider {
+                height: 6px;
+                width: 80%;
+                background: var(--vscode-button-background);
+                border-radius: 2px;
+            }
+
+            .volume-slider:focus {
+                outline: none;
+            }
+
+            .volume-slider::-webkit-slider-thumb {
+                -webkit-appearance: none;
+                width: 12px;
+                height: 12px;
+                background: var(--vscode-button-foreground);
+                border-radius: 50%;
+                cursor: pointer;
+            }
+
+            .volume-slider::-moz-range-thumb {
+                width: 12px;
+                height: 12px;
+                background: var(--vscode-button-foreground);
+                border-radius: 50%;
+                cursor: pointer;
+                border: none;
+            }
+
+            .mute-button {
+                padding: 4px;
+                width: 24px;
+            }
+        </style>
+    </head>
+    <body>
+        <h2 style="text-align: center;">Music Player</h2>
+        <div class="playlist-info">
+            <p>Now Playing: <span id="currentSong">None</span></p>
+            <audio id="audioPlayer" controls style="width: 100%"></audio>
+            <div class="volume-container">
+                <button onclick="toggleMute()" class="mute-button" aria-label="Toggle Mute">
+                    <svg class="icon" viewBox="0 0 16 16" id="volumeIcon">
+                        <path d="M11.536 14.01A8.473 8.473 0 0 0 14.026 8a8.473 8.473 0 0 0-2.49-6.01l-.708.707A7.476 7.476 0 0 1 13.025 8c0 2.071-.84 3.946-2.197 5.303l.708.707z"/>
+                        <path d="M10.121 12.596A6.48 6.48 0 0 0 12.025 8a6.48 6.48 0 0 0-1.904-4.596l-.707.707A5.483 5.483 0 0 1 11.025 8a5.483 5.483 0 0 1-1.61 3.89l.706.706z"/>
+                        <path d="M8.707 11.182A4.486 4.486 0 0 0 10.025 8a4.486 4.486 0 0 0-1.318-3.182L8 5.525A3.489 3.489 0 0 1 9.025 8 3.49 3.49 0 0 1 8 10.475l.707.707zM6.717 3.55A.5.5 0 0 1 7 4v8a.5.5 0 0 1-.812.39L3.825 10.5H1.5A.5.5 0 0 1 1 10V6a.5.5 0 0 1 .5-.5h2.325l2.363-1.89a.5.5 0 0 1 .529-.06z"/>
+                    </svg>
+                </button>
+                <input type="range" class="volume-slider" id="volumeSlider" 
+                       min="0" max="100" value="25" 
+                       aria-label="Volume Control">
+            </div>
+        </div>
+        
+        <div class="button-container">
+            <button onclick="selectFile()" aria-label="Select Music Folder">
+                <svg class="icon" viewBox="0 0 16 16">
+                    <path d="M14 4.5V14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h5.5L14 4.5zM4.5 3V2h5v2H4.5zm7 1h-5V2H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V4.5h-1.5z"/>
+                </svg>
+                Select Music Folder
+            </button>
+            <div class="control-container">
+                <button onclick="previous()" aria-label="Previous Song">
+                    <svg class="icon" viewBox="0 0 16 16">
+                        <path d="M4 4a.5.5 0 0 1 1 0v3.248l6.267-3.636c.52-.302 1.233.043 1.233.696v7.384c0 .653-.713.998-1.233.696L5 8.752V12a.5.5 0 0 1-1 0V4zm7.5.633L5.696 8l5.804 3.367V4.633z"/>
+                    </svg>
+                    Previous
+                </button>
+                <button onclick="playPause()" id="play-btn" aria-label="Play/Pause">
+                    <svg class="icon" viewBox="0 0 16 16" id="playPauseIcon">
+                        <path d="M11.596 8.697l-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393z"/>
+                    </svg>
+                    <span id="playPauseText">Play</span>
+                </button>
+                <button onclick="next()" aria-label="Next Song">
+                    <svg class="icon" viewBox="0 0 16 16">
+                        <path d="M12.5 4a.5.5 0 0 0-1 0v3.248L5.233 3.612C4.713 3.31 4 3.655 4 4.308v7.384c0 .653.713.998 1.233.696L11.5 8.752V12a.5.5 0 0 0 1 0V4zM5 4.633l5.804 3.367L5 11.367V4.633z"/>
+                    </svg>
+                    Next
+                </button>
+            </div>
+        </div>
+        <div id="songList" role="list" aria-label="Song List"></div>
+        <script>
+            const vscode = acquireVsCodeApi();
+            const audioPlayer = document.getElementById('audioPlayer');
+            const playBtn = document.getElementById('play-btn');
+            const playPauseIcon = document.getElementById('playPauseIcon');
+            const playPauseText = document.getElementById('playPauseText');
+            const volumeSlider = document.getElementById('volumeSlider');
+            const volumeIcon = document.getElementById('volumeIcon');
+            let previousVolume = 1;
+
+            function selectFile() {
+                vscode.postMessage({ command: 'selectFile' });
+            }
+
+            function playPause() {
+                if (audioPlayer.paused) {
+                    audioPlayer.play();
+                    playPauseIcon.innerHTML = '<path d="M6 3.5a.5.5 0 0 1 .5.5v8a.5.5 0 0 1-1 0V4a.5.5 0 0 1 .5-.5zm4 0a.5.5 0 0 1 .5.5v8a.5.5 0 0 1-1 0V4a.5.5 0 0 1 .5-.5z"/>';
+                    playPauseText.textContent = 'Pause';
+                } else {
+                    audioPlayer.pause();
+                    playPauseIcon.innerHTML = '<path d="M11.596 8.697l-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393z"/>';
+                    playPauseText.textContent = 'Play';
+                }
+            }
+
+            function next() {
+                vscode.postMessage({ command: 'next' });
+            }
+
+            function previous() {
+                vscode.postMessage({ command: 'previous' });
+            }
+
+            audioPlayer.addEventListener('ended', () => {
+                vscode.postMessage({ command: 'songEnded' });
+            });
+
+            window.addEventListener('load', () => {
+                vscode.postMessage({ command: 'ready' });
+            });
+
+            window.addEventListener('message', event => {
+                const message = event.data;
+                switch (message.command) {
+                    case 'updatePlaylist':
+                        updateSongList(message.songs, message.currentIndex);
+                        break;
+                    case 'loadSong':
+                        loadSong(message.songData, message.songName);
+                        if (message.autoplay) {
+                            audioPlayer.play();
+                        }
+                        break;
+                    case 'play':
+                        audioPlayer.play();
+                        break;
+                    case 'pause':
+                        audioPlayer.pause();
+                        break;
+                    case 'restoreState':
+                        updateSongList(message.songs, message.currentIndex);
+                        loadSong(message.songData, message.songName);
+                        if (message.isPlaying) {
+                            audioPlayer.play();
+                        }
+                        break;
+                }
+            });
+
+            function updateSongList(songs, currentIndex) {
+                const songList = document.getElementById('songList');
+                songList.innerHTML = '';
+                songs.forEach((song, index) => {
+                    const div = document.createElement('div');
+                    div.className = 'song-item' + (index === currentIndex ? ' active' : '');
+                    div.textContent = song.name;
+                    div.setAttribute('role', 'listitem');
+                    songList.appendChild(div);
+                });
+            }
+
+            function loadSong(songData, songName) {
+                document.getElementById('currentSong').textContent = songName;
+                audioPlayer.src = 'data:audio/mp3;base64,' + songData;
+                audioPlayer.play();
+            }
+
+            function updateVolumeIcon(volume) {
+                if (volume === 0) {
+                    volumeIcon.innerHTML = '<path d="M6.717 3.55A.5.5 0 0 1 7 4v8a.5.5 0 0 1-.812.39L3.825 10.5H1.5A.5.5 0 0 1 1 10V6a.5.5 0 0 1 .5-.5h2.325l2.363-1.89a.5.5 0 0 1 .529-.06zM9.741.85a.5.5 0 0 1 .108.698l-6.5 7.5a.5.5 0 0 1-.842-.49l6.5-7.5a.5.5 0 0 1 .734-.108z"/>';
+                } else if (volume < 0.5) {
+                    volumeIcon.innerHTML = '<path d="M6.717 3.55A.5.5 0 0 1 7 4v8a.5.5 0 0 1-.812.39L3.825 10.5H1.5A.5.5 0 0 1 1 10V6a.5.5 0 0 1 .5-.5h2.325l2.363-1.89a.5.5 0 0 1 .529-.06zM8.707 11.182A4.486 4.486 0 0 0 10.025 8a4.486 4.486 0 0 0-1.318-3.182L8 5.525A3.489 3.489 0 0 1 9.025 8 3.49 3.49 0 0 1 8 10.475l.707.707z"/>';
+                } else {
+                    volumeIcon.innerHTML = '<path d="M11.536 14.01A8.473 8.473 0 0 0 14.026 8a8.473 8.473 0 0 0-2.49-6.01l-.708.707A7.476 7.476 0 0 1 13.025 8c0 2.071-.84 3.946-2.197 5.303l.708.707z"/><path d="M10.121 12.596A6.48 6.48 0 0 0 12.025 8a6.48 6.48 0 0 0-1.904-4.596l-.707.707A5.483 5.483 0 0 1 11.025 8a5.483 5.483 0 0 1-1.61 3.89l.706.706z"/><path d="M8.707 11.182A4.486 4.486 0 0 0 10.025 8a4.486 4.486 0 0 0-1.318-3.182L8 5.525A3.489 3.489 0 0 1 9.025 8 3.49 3.49 0 0 1 8 10.475l.707.707zM6.717 3.55A.5.5 0 0 1 7 4v8a.5.5 0 0 1-.812.39L3.825 10.5H1.5A.5.5 0 0 1 1 10V6a.5.5 0 0 1 .5-.5h2.325l2.363-1.89a.5.5 0 0 1 .529-.06z"/>';
+                }
+            }
+
+            function toggleMute() {
+                if (audioPlayer.volume > 0) {
+                    previousVolume = audioPlayer.volume;
+                    audioPlayer.volume = 0;
+                    volumeSlider.value = 0;
+                } else {
+                    audioPlayer.volume = previousVolume;
+                    volumeSlider.value = previousVolume * 100;
+                }
+                updateVolumeIcon(audioPlayer.volume);
+            }
+
+            volumeSlider.addEventListener('input', (e) => {
+                const volume = e.target.value / 100;
+                audioPlayer.volume = volume;
+                updateVolumeIcon(volume);
+            });
+
+            // Initialize volume
+            audioPlayer.volume = volumeSlider.value / 100;
+            updateVolumeIcon(audioPlayer.volume);
+        </script>
+    </body>
+            </html>

@@ -14,6 +14,11 @@
   "contributes": {
     "commands": [
       {
+        "command": "extension.showMusicPlayer",
+        "title": "Show Music Player",
+        "category": "Music Player"
+      },
+      {
         "command": "extension.playMusic",
         "title": "Play Music",
         "category": "Music Player"
@@ -24,15 +29,17 @@
         {
           "id": "musicPlayer",
           "title": "Music Player",
-          "icon": "resources/musical-note.png"
+          "icon": "$(play-circle)"
         }
       ]
     },
     "views": {
       "musicPlayer": [
         {
+          "type": "webview",
           "id": "musicView",
-          "name": "Music Controls"
+          "name": "Music Player",
+          "icon": "$(play-circle)"
         }
       ]
     }

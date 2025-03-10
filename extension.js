@@ -1,68 +1,167 @@
 const vscode = require('vscode');
-const { exec } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 
-/**
- * @param {vscode.ExtensionContext} context
- */
-function activate(context) {
-    let panel = vscode.window.createWebviewPanel(
-        'musicPlayer',
-        'Music Player',
-        vscode.ViewColumn.One,
-        { enableScripts: true }
-    );
+class MusicViewProvider {
+    constructor(extensionUri) {
+        this._extensionUri = extensionUri;
+        this._view = undefined;
+        this._currentSongs = [];
+        this._currentSongIndex = 0;
+        this._isPlaying = false;
+        this._currentSongData = null;
+        this._currentSongName = null;
+    }
 
-    panel.webview.html = getWebviewContent();
+    resolveWebviewView(webviewView, context, token) {
+        this._view = webviewView;
 
-    // Listen for messages from the WebView
-    panel.webview.onDidReceiveMessage(
-        message => {
-            if (message.command === 'play') {
-                playMusic();
+        webviewView.webview.options = {
+            enableScripts: true,
+            localResourceRoots: [this._extensionUri]
+        };
+
+        webviewView.webview.html = this._getWebviewContent(webviewView.webview);
+
+        webviewView.webview.onDidReceiveMessage(async message => {
+            switch (message.command) {
+                case 'play':
+                    this._isPlaying = true;
+                    await this.playMusic();
+                    break;
+                case 'pause':
+                    this._isPlaying = false;
+                    await this.pauseMusic();
+                    break;
+                case 'next':
+                    await this.nextSong();
+                    break;
+                case 'previous':
+                    await this.previousSong();
+                    break;
+                case 'selectFile':
+                    await this.selectPlaylist();
+                    break;
+                case 'songEnded':
+                    await this.nextSong();
+                    break;
+                case 'ready':
+                    if (this._currentSongData) {
+                        this._view.webview.postMessage({
+                            command: 'restoreState',
+                            songData: this._currentSongData,
+                            songName: this._currentSongName,
+                            isPlaying: this._isPlaying,
+                            songs: this._currentSongs,
+                            currentIndex: this._currentSongIndex
+                        });
+                    }
+                    break;
             }
-        },
-        undefined,
-        context.subscriptions
+        });
+    }
+
+    async selectPlaylist() {
+        const folder = await vscode.window.showOpenDialog({
+            canSelectFiles: false,
+            canSelectFolders: true,
+            canSelectMany: false,
+        });
+
+        if (folder && folder.length > 0) {
+            const folderPath = folder[0].fsPath;
+            this._currentSongs = fs.readdirSync(folderPath)
+                .filter(file => ['.mp3', '.wav', '.ogg'].includes(path.extname(file).toLowerCase()))
+                .map(file => ({
+                    path: path.join(folderPath, file),
+                    name: file
+                }));
+
+            this._currentSongIndex = 0;
+            if (this._view) {
+                this._view.webview.postMessage({ 
+                    command: 'updatePlaylist',
+                    songs: this._currentSongs,
+                    currentIndex: this._currentSongIndex
+                });
+            }
+
+            if (this._currentSongs.length > 0) {
+                this.loadCurrentSong();
+            }
+        }
+    }
+
+    loadCurrentSong() {
+        if (this._currentSongs.length > 0) {
+            const currentSong = this._currentSongs[this._currentSongIndex];
+            const songData = fs.readFileSync(currentSong.path).toString('base64');
+            
+            this._currentSongData = songData;
+            this._currentSongName = currentSong.name;
+
+            if (this._view) {
+                this._view.webview.postMessage({
+                    command: 'loadSong',
+                    songData: songData,
+                    songName: currentSong.name,
+                    autoplay: this._isPlaying
+                });
+            }
+        }
+    }
+
+    async nextSong() {
+        if (this._currentSongs.length > 0) {
+            this._currentSongIndex = (this._currentSongIndex + 1) % this._currentSongs.length;
+            this.loadCurrentSong();
+        }
+    }
+
+    async previousSong() {
+        if (this._currentSongs.length > 0) {
+            this._currentSongIndex = (this._currentSongIndex - 1 + this._currentSongs.length) % this._currentSongs.length;
+            this.loadCurrentSong();
+        }
+    }
+
+    async playMusic() {
+        this._isPlaying = true;
+        if (this._view) {
+            this._view.webview.postMessage({ command: 'play' });
+        }
+    }
+
+    async pauseMusic() {
+        this._isPlaying = false;
+        if (this._view) {
+            this._view.webview.postMessage({ command: 'pause' });
+        }
+    }
+
+    _getWebviewContent(webview) {
+        const webviewPath = vscode.Uri.joinPath(this._extensionUri, 'webview.html');
+        const webviewContent = fs.readFileSync(webviewPath.fsPath, 'utf8');
+        return webviewContent.replace('${webview.cspSource}', webview.cspSource);
+    }
+}
+
+function activate(context) {
+    const provider = new MusicViewProvider(context.extensionUri);
+    
+    context.subscriptions.push(
+        vscode.window.registerWebviewViewProvider('musicView', provider)
     );
 
-    let disposable = vscode.commands.registerCommand('extension.playMusic', function () {
-        playMusic();
+    let playMusic = vscode.commands.registerCommand('extension.playMusic', () => {
+        provider.playMusic();
     });
 
-    context.subscriptions.push(disposable);
-}
-
-function playMusic() {
-    const vlcPath = '"C:\\Program Files (x86)\\VideoLAN\\VLC\\vlc.exe"'; // Adjust based on OS
-    exec(`${vlcPath} --playlist-autostart`, (error, stdout, stderr) => {
-        if (error) {
-            vscode.window.showErrorMessage(`Error starting VLC: ${error.message}`);
-            return;
-        }
+    let showMusicPlayer = vscode.commands.registerCommand('extension.showMusicPlayer', () => {
+        vscode.commands.executeCommand('musicView.focus');
     });
-}
 
-function getWebviewContent() {
-    return `
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="UTF-8">
-            <script>
-                const vscode = acquireVsCodeApi();
-                function play() {
-                    vscode.postMessage({ command: 'play' });
-                }
-            </script>
-        </head>
-        <body>
-            <h1>VSCode Music Player</h1>
-            <button onclick="play()">Play</button>
-        </body>
-        </html>
-    `;
+    context.subscriptions.push(playMusic, showMusicPlayer);
 }
 
 function deactivate() {}
