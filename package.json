@@ -1,0 +1,53 @@
+{
+  "name": "vscodemusic",
+  "displayName": "VSCodeMusic",
+  "description": "This is a vscode extension that allows the user to play and control music within vs code",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.98.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [],
+  "main": "./extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "extension.playMusic",
+        "title": "Play Music",
+        "category": "Music Player"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "musicPlayer",
+          "title": "Music Player",
+          "icon": "resources/music-icon.png"
+        }
+      ]
+    },
+    "views": {
+      "musicPlayer": [
+        {
+          "id": "musicView",
+          "name": "Music Controls"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "pretest": "npm run lint",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.98.0",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "20.x",
+    "eslint": "^9.21.0",
+    "@vscode/test-cli": "^0.0.10",
+    "@vscode/test-electron": "^2.4.1"
+  }
+}
