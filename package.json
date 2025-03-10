@@ -24,7 +24,7 @@
         {
           "id": "musicPlayer",
           "title": "Music Player",
-          "icon": "resources/music-icon.png"
+          "icon": "resources/musical-note.png"
         }
       ]
     },

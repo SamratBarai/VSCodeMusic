@@ -35,8 +35,8 @@ function activate(context) {
 }
 
 function playMusic() {
-    const vlcPath = '"C:\\Program Files\\VideoLAN\\VLC\\vlc.exe"'; // Adjust based on OS
-    exec(`${vlcPath} --intf rc`, (error, stdout, stderr) => {
+    const vlcPath = '"C:\\Program Files (x86)\\VideoLAN\\VLC\\vlc.exe"'; // Adjust based on OS
+    exec(`${vlcPath} --playlist-autostart`, (error, stdout, stderr) => {
         if (error) {
             vscode.window.showErrorMessage(`Error starting VLC: ${error.message}`);
             return;
